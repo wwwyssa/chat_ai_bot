@@ -17,7 +17,7 @@ system_prompt = open('gpt_prompt.txt', 'r', encoding='utf-8').read()
 
 
 # Функция для получения ответа OpenAI
-def GetResponse(text):
+async def GetResponse(text):
     completion = client.chat.completions.create(
         model=model,
         frequency_penalty=frequency_penalty,
@@ -33,4 +33,3 @@ def GetResponse(text):
     return completion.choices[0].message.content
 
 
-print(GetResponse('Привет, как дела?'))

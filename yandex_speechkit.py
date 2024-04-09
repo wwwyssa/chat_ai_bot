@@ -10,13 +10,14 @@ configure_credentials(
 )
 
 
-def synthesize(text, export_path, voice='alexander', role='good'):
+def synthesize(text, chat_id, export_path, voice='alexander', role='good'):
     model = model_repository.synthesis_model()
 
     model.voice = voice
     model.role = role
     result = model.synthesize(text, raw_format=False)
     result.export(export_path, 'ogg')
+    return export_path, chat_id
 
 
 if __name__ == '__main__':
