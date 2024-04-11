@@ -17,7 +17,7 @@ system_prompt = open('gpt_prompt.txt', 'r', encoding='utf-8').read()
 
 
 # Функция для получения ответа OpenAI
-async def GetResponse(text):
+def GetResponse(text):
     completion = client.chat.completions.create(
         model=model,
         frequency_penalty=frequency_penalty,
@@ -30,6 +30,20 @@ async def GetResponse(text):
             {"role": "user", "content": text}
         ]
     )
+
+    if completion.choices[0].message.content[-1].rstrip() not in '.!?':
+        t_a = completion.choices[0].message.content[::-1]
+        pos_v = 100000
+        pos_q = 100000
+        pos_d = 100000
+        if '!' in t_a:
+            pos_v = t_a.index('!')
+        if '?' in t_a:
+            pos_q = t_a.index('?')
+        if '.' in t_a:
+            pos_d = t_a.index('.')
+        completion.choices[0].message.content = completion.choices[0].message.content[:-min(pos_d, pos_q, pos_v)]
+    print(completion.choices[0].message.content)
     return completion.choices[0].message.content
 
 
