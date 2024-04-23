@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from time import time_ns
 
 from speechkit import model_repository, configure_credentials, creds
 
@@ -15,7 +15,11 @@ def synthesize(text, chat_id, export_path, voice='alexander', role='good'):
 
     model.voice = voice
     model.role = role
-    result = model.synthesize(text, raw_format=False)
+    try:
+        result = model.synthesize(text, raw_format=False)
+    except Exception as e:
+        print(e)
+        return
     result.export(export_path, 'ogg')
     return export_path, chat_id
 
@@ -23,4 +27,4 @@ def synthesize(text, chat_id, export_path, voice='alexander', role='good'):
 if __name__ == '__main__':
     voice = ['ermil']
     role = ['good']
-    synthesize('Привет, как дела?', 'voice/res.ogg')
+    synthesize('Привет, как дела? ', chat_id='1', export_path=f'voice/{str(time_ns())}.ogg')

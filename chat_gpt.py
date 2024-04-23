@@ -2,6 +2,9 @@ from openai import OpenAI
 import os
 import configparser
 
+from data import db_session
+from data.users import User
+
 config = configparser.ConfigParser()
 config.read('cfg.ini')
 
@@ -17,7 +20,9 @@ system_prompt = open('gpt_prompt.txt', 'r', encoding='utf-8').read()
 
 
 # Функция для получения ответа OpenAI
-def GetResponse(text):
+def GetResponse(text, user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.user_id == user_id).first()
     completion = client.chat.completions.create(
         model=model,
         frequency_penalty=frequency_penalty,
@@ -26,7 +31,7 @@ def GetResponse(text):
         max_tokens=max_tokens,
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "system", "content": f"Ты общаешься с пользователем описание которого представлено ниже:"},
+            {"role": "system", "content": f"Ты общаешься с пользователем описание которого представлено ниже , при своих ответах учитывай описание пользователя:\n{user.story}"},
             {"role": "user", "content": text}
         ]
     )
@@ -44,6 +49,5 @@ def GetResponse(text):
             pos_d = t_a.index('.')
         completion.choices[0].message.content = completion.choices[0].message.content[:-min(pos_d, pos_q, pos_v)]
     print(completion.choices[0].message.content)
+
     return completion.choices[0].message.content
-
-
