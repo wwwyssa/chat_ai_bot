@@ -12,5 +12,12 @@ pip install -r requirements.txt
 mkdir voice
 python bot.py
 ```
-
 Для запуска с РФ нужен VPN
+
+
+### Что и зачем
+bot.py - непосредственно тело бота;
+
+chat_gpt.py - здесь все функции, которые непосредственно используют OpenAI API;
+
+yandex_speechkit.py - здесь все функции, которые непосредственно используют YandexSpeechKIT API;
