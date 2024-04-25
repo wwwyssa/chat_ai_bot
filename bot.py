@@ -4,7 +4,7 @@ import logging
 import time
 
 from telegram.ext import Application, MessageHandler, filters, CommandHandler
-
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
 from chat_gpt import GetResponse
 from yandex_speechkit import synthesize
 
@@ -43,6 +43,7 @@ async def start(update, context):
         await update.message.reply_html(rf"Привет {user.mention_html()}! Ты здесь впервые, о чем сегодня поболтаем?")
         try:
             db_sess.commit()
+            db_sess.close()
             return
         except:
             db_sess.rollback()
@@ -51,32 +52,68 @@ async def start(update, context):
     await update.message.reply_html(rf"Привет {user.mention_html()}! О чем сегодня поболтаем?")
 
 
+async def choose(update, context):
+    reply_keyboard = [['/voice', '/text']]
+    markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+    await update.message.reply_html(rf"Выбери то как ты хочешь, чтобы я отвечал:", reply_markup=markup)
+
+
+async def ans_text(update, context):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.user_id == update.effective_message.chat_id).first()
+    user.model = 'text'
+    db_sess.commit()
+    db_sess.close()
+    await update.message.reply_html(rf"Выбран ответ текстом", reply_markup=ReplyKeyboardRemove())
+
+
+async def ans_voice(update, context):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.user_id == update.effective_message.chat_id).first()
+    user.model = 'voice'
+    db_sess.commit()
+    db_sess.close()
+    await update.message.reply_html(rf"Выбран ответ голосом", reply_markup=ReplyKeyboardRemove())
+
+
 def save_mem(user_id, text):
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.user_id == user_id).first()
     user.story += text
     db_sess.commit()
+    db_sess.close()
 
 
-async def text_answer(update, context):
-    text = GetResponse(update.message.text, update.effective_message.chat_id)
-    save_mem(update.effective_message.chat_id, f"{update.message.text}")
-    await update.message.reply_text(f'{text}')
+async def text_answer(chat_id, text_inp):
+    text = GetResponse(text_inp, chat_id)
+    save_mem(chat_id, f"{text}")
+    return text
 
 
-async def voice_answer(update, context):
-    text = GetResponse(update.message.text, update.effective_message.chat_id)
-    save_mem(update.effective_message.chat_id, f"{update.message.text}")
-    res = synthesize(text=text, chat_id=update.effective_message.chat_id, export_path=f'voice/{time.time()}.ogg')
-    await update.message.reply_voice(res[0])
+async def voice_answer(chat_id, text_inp):
+    text = GetResponse(text_inp, chat_id)
+    save_mem(chat_id, f"{text_inp}")
+    res = synthesize(text=text, chat_id=chat_id, export_path=f'voice/{time.time()}.ogg')
+    return res[0]
+
+
+async def messages_handler(update, context):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.user_id == update.effective_message.chat_id).first()
+    if user.model == 'text':
+        ans = await text_answer(update.effective_message.chat_id, update.message.text)
+        await update.message.reply_text(f'{ans}')
+    else:
+        ans = await voice_answer(update.effective_message.chat_id, update.message.text)
+        await update.message.reply_voice(ans)
 
 
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
-    voice_handler = MessageHandler(filters.TEXT, voice_answer)
-    text_handler = MessageHandler(filters.TEXT, text_answer)
-    application.add_handler(text_handler)
+    application.add_handler(CommandHandler("choose", choose))
+    message_handler = MessageHandler(filters.TEXT, messages_handler)
+    application.add_handler(message_handler)
     application.run_polling()
 
 
