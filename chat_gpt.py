@@ -17,6 +17,7 @@ temperature = float(config["GPT"]["temperature"])
 max_tokens = int(config["GPT"]["max_tokens"])
 client = OpenAI(api_key=api_key)
 system_prompt = open('gpt_prompt.txt', 'r', encoding='utf-8').read()
+sum_prompt = open('save_mem.txt', 'r', encoding='utf-8').read()  # Промпт для суммаризации диалога
 
 
 # Функция для получения ответа OpenAI
@@ -31,7 +32,8 @@ def GetResponse(text, user_id):
         max_tokens=max_tokens,
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "system", "content": f"Ты общаешься с пользователем описание которого представлено ниже , при своих ответах учитывай описание пользователя:\n{user.story}"},
+            {"role": "system",
+             "content": f"Ты общаешься с пользователем описание которого представлено ниже , при своих ответах учитывай описание пользователя:\n{user.story}"},
             {"role": "user", "content": text}
         ]
     )
@@ -51,3 +53,24 @@ def GetResponse(text, user_id):
     print(completion.choices[0].message.content)
 
     return completion.choices[0].message.content
+
+
+#суммаризация истории сообщений
+def save_memory(chat_id, conversation):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.chat_id == chat_id).first()
+
+    completion = client.chat.completions.create(
+        model="gpt-4-0125-preview",
+        messages=[
+            {"role": "system", "content": sum_prompt},
+            {"role": "user", "content": f"{user.story}\n{conversation}"}
+        ]
+    )
+    try:
+        user.story = completion.choices[0].message.content
+        db_sess.commit()
+    except:
+        print(f"Ошибка сохранения памяти для пользователя - {user.user_id}")
+        db_sess.rollback()
+    db_sess.close()

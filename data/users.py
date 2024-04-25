@@ -9,8 +9,7 @@ class User(SqlAlchemyBase):
     # Информация о аккаунте
     user_id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     is_admin = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
-    listened = sqlalchemy.Column(sqlalchemy.Float, nullable=True)
-
+    banned = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
     # Информация о выборах пользователя
     model = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     last_messages = sqlalchemy.Column(sqlalchemy.String, nullable=True)
