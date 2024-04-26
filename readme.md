@@ -21,3 +21,10 @@ bot.py - непосредственно тело бота;
 chat_gpt.py - здесь все функции, которые непосредственно используют OpenAI API;
 
 yandex_speechkit.py - здесь все функции, которые непосредственно используют YandexSpeechKIT API;
+
+## Функции
+В chat_gpt.py:
+  GetResponse - получение ответа от ChatGPT4.
+  save_memory - сохранение чата. Его суммаризация
+В yandex_speechkit.py:
+  synthesize - генерация голосового ответа от yandexspeechkit
