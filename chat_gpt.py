@@ -58,7 +58,7 @@ def GetResponse(text, user_id):
 #суммаризация истории сообщений
 def save_memory(chat_id, conversation):
     db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.chat_id == chat_id).first()
+    user = db_sess.query(User).filter(User.user_id == chat_id).first()
 
     completion = client.chat.completions.create(
         model="gpt-4-0125-preview",
